@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SkyTrip — Book Flights & Tours</title>
+  <style>
+    :root{
+      --bg: #f4fbff;
+      --card: rgba(255,255,255,0.65);
+      --text: #0e2336;
+      --muted:#46637a;
+      --brand1:#1ea7ff;
+      --brand2:#15d6c6;
+      --accent:#0ea5e9;
+      --glass-border: rgba(255,255,255,0.5);
+      --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      --ring: 0 0 0 3px rgba(21,214,198,0.35);
+      --chip:#e8f6ff;
+      --link:#0b6bcb;
+    }
+    body.dark{
+      --bg: #0b1220;
+      --card: rgba(17, 25, 40, 0.6);
+      --text: #e6f0ff;
+      --muted:#a3b3c7;
+      --brand1:#00b7ff;
+      --brand2:#33ffc9;
+      --accent:#22d3ee;
+      --glass-border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.55);
+      --ring: 0 0 0 3px rgba(34,211,238,0.35);
+      --chip:#142032;
+      --link:#5cc8ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(21,214,198,.25), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(30,167,255,.25), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+      scroll-behavior:smooth;
+    }
+    a{color:var(--link);text-decoration:none}
+    img{max-width:100%;display:block}
+    .container{width:min(1200px,92%);margin:auto}
+    header{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter: blur(14px);
+      background: linear-gradient( to right, rgba(255,255,255,.35), rgba(255,255,255,.15) );
+      border-bottom:1px solid var(--glass-border);
+    }
+    body.dark header{background: linear-gradient( to right, rgba(17,25,40,.65), rgba(17,25,40,.35) );}
+    .nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 0;
+    }
+    .brand{display:flex;gap:10px;align-items:center;font-weight:800;letter-spacing:.4px}
+    .brand-badge{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, var(--brand1), var(--brand2));
+      display:grid;place-items:center;color:white;box-shadow: var(--shadow);
+      font-weight:900
+    }
+    .nav a{margin:0 10px;font-weight:600;opacity:.9}
+    .theme-toggle{
+      border:1px solid var(--glass-border);background:var(--card);padding:8px 12px;border-radius:12px;
+      display:flex;gap:8px;align-items:center;cursor:pointer;transition:.25s transform, .25s box-shadow
+    }
+    .theme-toggle:focus-visible{outline:none;box-shadow:var(--ring)}
+    .theme-toggle:hover{transform:translateY(-1px)}
+    /* HERO */
+    .hero{
+      position:relative;isolation:isolate;color:white;
+      min-height:78vh;display:grid;place-items:center;padding:60px 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,.5)),
+        url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+    }
+    .hero .content{
+      text-align:center; padding:20px; gap:20px; display:flex; flex-direction:column; align-items:center;
+    }
+    .headline{
+      font-size: clamp(28px, 5vw, 56px); font-weight:900; line-height:1.05; letter-spacing:.2px;
+      text-shadow:0 8px 50px rgba(0,0,0,.55)
+    }
+    .subhead{opacity:.95;max-width:800px}
+    .search-card{
+      display:grid;gap:14px;
+      grid-template-columns:repeat(6, minmax(0,1fr));
+      width:min(1100px,96%);
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(16px);
+      padding:14px;border-radius:18px; box-shadow: var(--shadow);
+    }
+    .field{display:flex;flex-direction:column}
+    .label{font-size:.8rem;opacity:.95;margin-bottom:6px}
+    .input, .select{
+      width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--glass-border); background: rgba(255,255,255,.85);
+      color:#0b1220; outline:none; transition:.2s box-shadow, .2s transform;
+    }
+    .input:focus, .select:focus{box-shadow: 0 0 0 3px rgba(14,165,233,.35)}
+    .btn{
+      padding:12px 16px; font-weight:800; border:none; border-radius:12px; cursor:pointer; transition:.25s transform, .25s box-shadow, .25s opacity;
+    }
+    .btn-primary{background:linear-gradient(135deg, var(--brand1), var(--brand2)); color:#00212a}
+    .btn-ghost{background:rgba(255,255,255,.2);color:white;border:1px solid rgba(255,255,255,.5)}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(255,255,255,.45)}
+    .search-actions{display:flex;gap:10px; grid-column: span 2}
+    .err{grid-column:1/-1;color:#ffd7d7;font-weight:700;display:none}
+    @media (max-width:1024px){
+      .search-card{grid-template-columns: repeat(3,1fr)}
+      .search-actions{grid-column:1/-1; justify-content:center}
+    }
+    @media (max-width:600px){
+      .search-card{grid-template-columns: repeat(2,1fr)}
+    }
+    /* Sections */
+    section{padding:64px 0}
+    h2.section-title{
+      font-size: clamp(22px, 3.3vw, 34px); margin:0 0 18px; font-weight:900;
+    }
+    .muted{color:var(--muted)}
+    .grid{
+      display:grid; gap:18px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+    .card{
+      grid-column: span 4; background:var(--card); border:1px solid var(--glass-border); border-radius:18px; overflow:hidden; box-shadow:var(--shadow); transition:.25s transform, .25s box-shadow, .3s background;
+    }
+    .card:hover{transform:translateY(-4px)}
+    @media (max-width:1024px){.card{grid-column: span 6}}
+    @media (max-width:600px){.card{grid-column: span 12}}
+    .card img{height:180px; width:100%; object-fit:cover}
+    .card-body{padding:16px}
+    .price{font-weight:900}
+    .chip{display:inline-block; padding:6px 10px; border-radius:999px; background:var(--chip); font-weight:700; font-size:.8rem}
+    /* Offers */
+    .offers .card{position:relative}
+    .badge{
+      position:absolute; top:12px; left:12px; background:linear-gradient(135deg, #ff7a7a, #ffce6b); color:#1a0f0f; padding:6px 10px; border-radius:999px; font-weight:900; box-shadow:var(--shadow)
+    }
+    /* Why Us */
+    .why .card{display:flex; gap:16px; align-items:flex-start; padding:18px}
+    .icon{
+      width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand1),var(--brand2)); color:#00212a; font-weight:900;
+      flex:0 0 auto
+    }
+    /* Testimonials */
+    .carousel{
+      position:relative; overflow:hidden; border-radius:18px; border:1px solid var(--glass-border); background:var(--card)
+    }
+    .track{display:flex; transition: transform .6s cubic-bezier(.22,.61,.36,1); will-change: transform}
+    .slide{min-width:100%; padding:26px}
+    .stars{letter-spacing:2px}
+    .car-btn{
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:var(--card); border:1px solid var(--glass-border); width:42px; height:42px; border-radius:12px; display:grid; place-items:center; cursor:pointer
+    }
+    .car-btn.left{left:8px} .car-btn.right{right:8px}
+    /* Newsletter */
+    .newsletter{
+      display:flex; gap:12px; flex-wrap:wrap; background:var(--card); border:1px solid var(--glass-border); padding:18px; border-radius:18px; align-items:center
+    }
+    .newsletter input{flex:1; min-width:220px}
+    .toast{
+      position:fixed; bottom:20px; right:20px; background:var(--card); border:1px solid var(--glass-border); padding:12px 16px; border-radius:12px; box-shadow:var(--shadow); opacity:0; pointer-events:none; transform:translateY(10px); transition:.3s;
+    }
+    .toast.show{opacity:1; transform:translateY(0)}
+    /* Footer */
+    footer{
+      margin-top:40px; padding:32px 0; background: linear-gradient( to top, rgba(0,0,0,.08), transparent );
+      border-top:1px solid var(--glass-border)
+    }
+    .fgrid{display:grid; gap:18px; grid-template-columns: repeat(12,1fr)}
+    .fcol{grid-column: span 3}
+    @media (max-width:900px){.fcol{grid-column: span 6}}
+    @media (max-width:600px){.fcol{grid-column: span 12}}
+    /* Animations */
+    .reveal{opacity:0; transform:translateY(16px); transition: .6s opacity ease, .6s transform ease}
+    .reveal.show{opacity:1; transform:none}
+    .sr{scroll-margin-top:90px}
+    /* Focus visible for inputs globally */
+    input, select, button, a{outline-color: var(--accent)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav" aria-label="Main Navigation">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">✈</div>
+        <a href="index.html" class="logo" aria-label="SkyTrip Home">SkyTrip</a>
+      </div>
+      <nav>
+        <a href="#popular" class="muted">Popular</a>
+        <a href="#offers" class="muted">Offers</a>
+        <a href="tours.html" class="muted">Tours</a>
+        <a href="#why" class="muted">Why Us</a>
+        <a href="#newsletter" class="muted">Newsletter</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle Dark Mode">
+        <span id="themeIcon">🌙</span> <span id="themeText" class="muted" style="font-weight:700">Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero sr" aria-label="Flight Search">
+      <div class="content container">
+        <h1 class="headline">Fly Smarter. Travel Further.</h1>
+        <p class="subhead">Modern booking inspired by MakeMyTrip — glassy UI, fast search, and curated packages crafted for every traveler.</p>
+
+        <form id="flightForm" class="search-card" novalidate aria-describedby="formError">
+          <div class="field">
+            <label class="label" for="fromCity">From (City)</label>
+            <input id="fromCity" class="input" type="text" placeholder="e.g., Delhi" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label class="label" for="toCity">To (City)</label>
+            <input id="toCity" class="input" type="text" placeholder="e.g., Mumbai" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label class="label" for="depDate">Departure</label>
+            <input id="depDate" class="input" type="date" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label class="label" for="retDate">Return</label>
+            <input id="retDate" class="input" type="date" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label class="label" for="travellers">Travellers</label>
+            <input id="travellers" class="input" type="number" min="1" max="9" value="1" required aria-required="true" />
+          </div>
+          <div class="field">
+            <label class="label" for="fclass">Class</label>
+            <select id="fclass" class="select" required aria-required="true">
+              <option value="">Select</option>
+              <option>Economy</option>
+              <option>Premium Economy</option>
+              <option>Business</option>
+              <option>First</option>
+            </select>
+          </div>
+          <div class="search-actions">
+            <button class="btn btn-primary" type="submit" id="searchBtn">Search Flights</button>
+            <a class="btn btn-ghost" href="tours.html">Explore Packages</a>
+          </div>
+          <div class="err" id="formError" role="alert"></div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Popular Packages -->
+    <section id="popular" class="sr container">
+      <h2 class="section-title">Popular Packages</h2>
+      <p class="muted">Handpicked getaways with the best value — hill stations, beaches, heritage trails and more.</p>
+      <div class="grid">
+        <!-- 6 cards -->
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1600&auto=format&fit=crop" alt="Goa Beach" />
+          <div class="card-body">
+            <h3>Goa Sunshine Escape</h3>
+            <p class="muted">3N/4D • Beachside resort + parties.</p>
+            <p class="price">₹ 12,999</p>
+            <a class="btn btn-primary" href="tours.html#goa">View</a>
+          </div>
+        </article>
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=1600&auto=format&fit=crop" alt="Manali Hills" />
+          <div class="card-body">
+            <h3>Manali Himalayan Retreat</h3>
+            <p class="muted">4N/5D • Snow, cafes, Solang Valley.</p>
+            <p class="price">₹ 15,499</p>
+            <a class="btn btn-primary" href="tours.html#manali">View</a>
+          </div>
+        </article>
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1531379410502-63bfe8cdaf87?q=80&w=1600&auto=format&fit=crop" alt="Jaipur Fort" />
+          <div class="card-body">
+            <h3>Jaipur Royal Heritage</h3>
+            <p class="muted">2N/3D • Forts, palaces, pink streets.</p>
+            <p class="price">₹ 9,999</p>
+            <a class="btn btn-primary" href="tours.html#jaipur">View</a>
+          </div>
+        </article>
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop" alt="Kerala Backwaters" />
+          <div class="card-body">
+            <h3>Kerala Backwater Bliss</h3>
+            <p class="muted">3N/4D • Houseboat + Ayurveda.</p>
+            <p class="price">₹ 14,999</p>
+            <a class="btn btn-primary" href="tours.html#kerala">View</a>
+          </div>
+        </article>
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1505764706515-aa95265c5abc?q=80&w=1600&auto=format&fit=crop" alt="Ladakh" />
+          <div class="card-body">
+            <h3>Ladakh Road Adventure</h3>
+            <p class="muted">6N/7D • Pangong, Nubra, passes.</p>
+            <p class="price">₹ 28,999</p>
+            <a class="btn btn-primary" href="tours.html#ladakh">View</a>
+          </div>
+        </article>
+        <article class="card reveal">
+          <img src="https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1600&auto=format&fit=crop" alt="Andaman" />
+          <div class="card-body">
+            <h3>Andaman Island Hopping</h3>
+            <p class="muted">5N/6D • Scuba + beaches.</p>
+            <p class="price">₹ 24,499</p>
+            <a class="btn btn-primary" href="tours.html#andaman">View</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Special Offers -->
+    <section id="offers" class="sr container offers">
+      <h2 class="section-title">Special Offers</h2>
+      <div class="grid">
+        <article class="card reveal">
+          <span class="badge">Flat 20% OFF</span>
+          <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1600&auto=format&fit=crop" alt="Singapore" />
+          <div class="card-body">
+            <h3>Singapore City Break</h3>
+            <p class="muted">Skylines, Sentosa & Universal.</p>
+          </div>
+        </article>
+        <article class="card reveal">
+          <span class="badge">Save ₹3000</span>
+          <img src="https://images.unsplash.com/photo-1500534314209-cfb95c9a3c25?q=80&w=1600&auto=format&fit=crop" alt="Bali" />
+          <div class="card-body">
+            <h3>Bali Romantic Escape</h3>
+            <p class="muted">Ubud, waterfalls & beach clubs.</p>
+          </div>
+        </article>
+        <article class="card reveal">
+          <span class="badge">Buy 1 Get 1</span>
+          <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1600&auto=format&fit=crop" alt="Dubai" />
+          <div class="card-body">
+            <h3>Dubai Dazzle</h3>
+            <p class="muted">Desert safari, Burj & malls.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Why Us -->
+    <section id="why" class="sr container">
+      <h2 class="section-title">Why Book With Us</h2>
+      <div class="grid">
+        <div class="card reveal why" style="grid-column: span 3">
+          <div class="icon">₹</div>
+          <div>
+            <h3>Best Price Guarantee</h3>
+            <p class="muted">Transparent pricing with no hidden fees.</p>
+          </div>
+        </div>
+        <div class="card reveal why" style="grid-column: span 3">
+          <div class="icon">🛡</div>
+          <div>
+            <h3>Secure Payments</h3>
+            <p class="muted">PCI-safe checkout keeps you protected.</p>
+          </div>
+        </div>
+        <div class="card reveal why" style="grid-column: span 3">
+          <div class="icon">⚡</div>
+          <div>
+            <h3>Instant Confirmations</h3>
+            <p class="muted">Book now, get e-itinerary instantly.</p>
+          </div>
+        </div>
+        <div class="card reveal why" style="grid-column: span 3">
+          <div class="icon">📞</div>
+          <div>
+            <h3>24×7 Support</h3>
+            <p class="muted">Hum hamesha yahin hain — anytime.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Carousel -->
+    <section class="sr container" aria-label="Testimonials">
+      <h2 class="section-title">Traveller Love</h2>
+      <div class="carousel reveal" id="carousel" role="region" aria-roledescription="carousel">
+        <button class="car-btn left" aria-label="Previous" id="prev">‹</button>
+        <button class="car-btn right" aria-label="Next" id="next">›</button>
+        <div class="track" id="track">
+          <article class="slide" aria-roledescription="slide">
+            <p class="stars">★★★★★</p>
+            <p>“Flawless booking and gorgeous UI. Got the best Goa deal!”</p>
+            <p class="muted">— Aditi, Pune</p>
+          </article>
+          <article class="slide" aria-roledescription="slide">
+            <p class="stars">★★★★★</p>
+            <p>“Instant confirmation + helpful support. Highly recommended.”</p>
+            <p class="muted">— Arjun, Delhi</p>
+          </article>
+          <article class="slide" aria-roledescription="slide">
+            <p class="stars">★★★★☆</p>
+            <p>“Great filters on tours page. Found perfect Ladakh trip.”</p>
+            <p class="muted">— Riya, Mumbai</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section id="newsletter" class="sr container">
+      <h2 class="section-title">Stay in the Loop</h2>
+      <p class="muted">Subscribe to get offers, trip ideas, and price alerts straight to your inbox.</p>
+      <form class="newsletter" id="newsForm" novalidate>
+        <input class="input" type="email" id="newsEmail" placeholder="you@example.com" aria-label="Email address" required />
+        <button class="btn btn-primary" type="submit">Subscribe</button>
+        <span class="muted" style="font-size:.9rem">We respect your privacy.</span>
+      </form>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <footer>
+    <div class="container fgrid">
+      <div class="fcol">
+        <div class="brand" style="margin-bottom:8px">
+          <div class="brand-badge">✈</div><strong>SkyTrip</strong>
+        </div>
+        <p class="muted">Inspired by MakeMyTrip’s modern style. Glassy cards, smooth flows, smart deals.</p>
+      </div>
+      <div class="fcol">
+        <h4>Quick Links</h4>
+        <p><a href="#popular">Popular</a></p>
+        <p><a href="#offers">Offers</a></p>
+        <p><a href="tours.html">Tours</a></p>
+      </div>
+      <div class="fcol">
+        <h4>Support</h4>
+        <p><a href="#">Help Center</a></p>
+        <p><a href="#">Cancellations</a></p>
+        <p><a href="#">Terms</a></p>
+      </div>
+      <div class="fcol">
+        <h4>Contact</h4>
+        <p class="muted">support@skytrip.example</p>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <a href="#" aria-label="Twitter" title="Twitter">🐦</a>
+          <a href="#" aria-label="Instagram" title="Instagram">📸</a>
+          <a href="#" aria-label="YouTube" title="YouTube">▶️</a>
+        </div>
+      </div>
+    </div>
+    <div class="container" style="margin-top:18px"><small class="muted">© 2025 SkyTrip</small></div>
+  </footer>
+
+  <script>
+    // THEME
+    const rootBody = document.body;
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    const saved = localStorage.getItem('theme');
+    if(saved === 'dark') { rootBody.classList.add('dark'); themeIcon.textContent='☀️'; themeText.textContent='Light'; }
+    function toggleTheme(){
+      rootBody.classList.toggle('dark');
+      const dark = rootBody.classList.contains('dark');
+      localStorage.setItem('theme', dark?'dark':'light');
+      themeIcon.textContent = dark ? '☀️' : '🌙';
+      themeText.textContent = dark ? 'Light' : 'Dark';
+    }
+    themeToggle.addEventListener('click', toggleTheme);
+    themeToggle.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggleTheme(); }})
+
+    // INTERSECTION REVEAL
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('show'); });
+    }, {threshold: .14});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+    // Carousel
+    const track = document.getElementById('track');
+    const slides = Array.from(track.children);
+    let idx = 0;
+    function go(i){
+      idx = (i+slides.length)%slides.length;
+      track.style.transform = `translateX(-${idx*100}%)`;
+    }
+    document.getElementById('prev').addEventListener('click', ()=>go(idx-1));
+    document.getElementById('next').addEventListener('click', ()=>go(idx+1));
+    let auto = setInterval(()=>go(idx+1), 4000);
+    track.addEventListener('pointerenter', ()=>clearInterval(auto));
+    track.addEventListener('pointerleave', ()=>auto = setInterval(()=>go(idx+1), 4000));
+
+    // Newsletter
+    const toast = document.getElementById('toast');
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=> toast.classList.remove('show'), 2600);
+    }
+    document.getElementById('newsForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('newsEmail').value.trim();
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      showToast(ok ? 'Subscribed 🎉 Check your inbox!' : 'Please enter a valid email.');
+    });
+
+    // Flight form validation
+    const flightForm = document.getElementById('flightForm');
+    flightForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const from = document.getElementById('fromCity').value.trim();
+      const to = document.getElementById('toCity').value.trim();
+      const dep = document.getElementById('depDate').value;
+      const ret = document.getElementById('retDate').value;
+      const trav = parseInt(document.getElementById('travellers').value,10);
+      const fclass = document.getElementById('fclass').value;
+      const err = document.getElementById('formError');
+
+      err.style.display='none';
+      let msg = '';
+      if(!from || !to || !dep || !ret || !trav || !fclass){ msg='Please fill all fields.'; }
+      else if(from.toLowerCase()===to.toLowerCase()){ msg='From and To cannot be the same.'; }
+      else if(new Date(dep) > new Date(ret)){ msg='Return date must be after departure.'; }
+      else if(trav<1 || trav>9){ msg='Travellers must be between 1 and 9.'; }
+
+      if(msg){
+        err.textContent = '⚠ ' + msg;
+        err.style.display='block';
+        return;
+      }
+      showToast('Searching best fares… ✈️');
+      // Fake redirect to tours with query
+      const q = new URLSearchParams({ from, to, dep, ret, trav, fclass }).toString();
+      setTimeout(()=> location.href = `tours.html?${q}`, 800);
+    });
+
+    // Set min dates
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('depDate').min = today;
+    document.getElementById('retDate').min = today;
+    document.getElementById('depDate').addEventListener('change', (e)=>{
+      document.getElementById('retDate').min = e.target.value || today;
+    });
+  </script>
+</body>
+</html>

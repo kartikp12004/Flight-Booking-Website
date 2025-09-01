@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SkyTrip — Payment</title>
+  <style>
+    :root{
+      --bg: #f4fbff;
+      --card: rgba(255,255,255,0.65);
+      --text: #0e2336;
+      --muted:#46637a;
+      --brand1:#1ea7ff;
+      --brand2:#15d6c6;
+      --accent:#0ea5e9;
+      --glass-border: rgba(0,0,0,0.08);
+      --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      --ring: 0 0 0 3px rgba(14,165,233,0.35);
+      --chip:#e8f6ff;
+      --success:#10b981;
+    }
+    body.dark{
+      --bg: #0b1220;
+      --card: rgba(17, 25, 40, 0.6);
+      --text: #e6f0ff;
+      --muted:#a3b3c7;
+      --brand1:#00b7ff;
+      --brand2:#33ffc9;
+      --accent:#22d3ee;
+      --glass-border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.55);
+      --ring: 0 0 0 3px rgba(34,211,238,0.35);
+      --chip:#142032;
+      --success:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    .container{width:min(1100px,92%);margin:auto}
+    header{
+      position:sticky;top:0;z-index:30; backdrop-filter: blur(14px);
+      background: linear-gradient( to right, rgba(255,255,255,.6), rgba(255,255,255,.25) );
+      border-bottom:1px solid var(--glass-border);
+    }
+    body.dark header{background: linear-gradient( to right, rgba(17,25,40,.65), rgba(17,25,40,.35) );}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:900}
+    .badge{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#00212a}
+    .theme-toggle{
+      border:1px solid var(--glass-border);background:var(--card);padding:8px 12px;border-radius:12px;
+      display:flex;gap:8px;align-items:center;cursor:pointer;transition:.25s transform
+    }
+    .theme-toggle:hover{transform:translateY(-1px)}
+    main{padding:26px 0}
+    .grid{display:grid;gap:16px;grid-template-columns: repeat(12,1fr)}
+    .summary{grid-column: span 4; background:var(--card); border:1px solid var(--glass-border); border-radius:18px; padding:16px; box-shadow:var(--shadow)}
+    .pay{grid-column: span 8; background:var(--card); border:1px solid var(--glass-border); border-radius:18px; padding:16px; box-shadow:var(--shadow)}
+    @media (max-width:900px){.summary{grid-column: span 12} .pay{grid-column: span 12}}
+    .input, .select{
+      width:100%; padding:12px; border-radius:12px; border:1px solid var(--glass-border); background:white; outline:none
+    }
+    body.dark .input, body.dark .select{background:rgba(0,0,0,.15);color:var(--text)}
+    .row{display:grid; gap:12px; grid-template-columns: repeat(12,1fr)}
+    .col6{grid-column: span 6}
+    .col4{grid-column: span 4}
+    .col8{grid-column: span 8}
+    .btn{padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:900}
+    .btn-primary{background:linear-gradient(135deg,var(--brand1),var(--brand2)); color:#00212a}
+    .btn-ghost{background:transparent;border:1px solid var(--glass-border)}
+    .muted{color:var(--muted)}
+    .price{font-weight:900;font-size:1.2rem}
+    .promo{display:flex;gap:8px}
+    .chip{background:var(--chip);padding:6px 10px;border-radius:999px;font-weight:700;font-size:.8rem}
+    /* Success overlay */
+    .overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:none; align-items:center; justify-content:center; z-index:60
+    }
+    .overlay.show{display:flex}
+    .dialog{
+      width:min(520px, 92%); background:var(--card); border:1px solid var(--glass-border);
+      border-radius:18px; padding:24px; text-align:center; box-shadow:var(--shadow); position:relative; overflow:hidden
+    }
+    .success{font-size:1.15rem; font-weight:800; color:var(--success)}
+    /* Confetti */
+    .confetti{position:fixed; top:0; left:0; pointer-events:none; width:100%; height:0; overflow:visible}
+    .piece{
+      position:fixed; top:-20px; width:10px; height:14px; opacity:.9;
+      animation: fall 2.2s linear forwards;
+    }
+    @keyframes fall{
+      to{ transform: translateY(110vh) rotate(720deg); opacity:1}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="badge">✈</div>
+        <a href="index.html" aria-label="Back to Home">SkyTrip</a>
+      </div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><span id="themeIcon">🌙</span><strong id="themeText" class="muted">Dark</strong></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Payment</h1>
+    <div class="grid">
+      <!-- Summary -->
+      <aside class="summary" aria-label="Booking Summary">
+        <h2 style="margin-top:0">Booking Summary</h2>
+        <p id="tourTitle" class="chip" style="display:inline-block"></p>
+        <p class="muted">Duration: <span id="tourDuration"></span></p>
+        <p class="muted">Rating: ★ <span id="tourRating"></span></p>
+        <hr style="border:0;border-top:1px solid var(--glass-border)">
+        <p>Base Price:</p>
+        <p class="price">₹ <span id="basePrice">0</span></p>
+        <div class="promo" style="margin:10px 0">
+          <input id="promo" class="input" placeholder="Enter promo (TRAVEL10)" aria-label="Promo code"/>
+          <button id="applyPromo" class="btn btn-ghost">Apply</button>
+        </div>
+        <p id="promoMsg" class="muted" role="status"></p>
+        <h3>Total: ₹ <span id="total">0</span></h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="location.href='index.html'">Back to Home</button>
+          <button id="downloadBtn" class="btn btn-ghost">Download Itinerary</button>
+        </div>
+      </aside>
+
+      <!-- Payment form -->
+      <section class="pay" aria-label="Payment Form">
+        <h2 style="margin-top:0">Enter Details</h2>
+        <form id="payForm" novalidate>
+          <div class="row">
+            <div class="col6">
+              <label>Full Name</label>
+              <input class="input" id="name" required placeholder="Your name"/>
+            </div>
+            <div class="col6">
+              <label>Email</label>
+              <input class="input" id="email" type="email" required placeholder="you@example.com"/>
+            </div>
+            <div class="col6">
+              <label>Phone</label>
+              <input class="input" id="phone" type="tel" required placeholder="+91-"/>
+            </div>
+            <div class="col6">
+              <label>Card Number</label>
+              <input class="input" id="card" inputmode="numeric" minlength="16" maxlength="19" required placeholder="XXXX XXXX XXXX XXXX"/>
+            </div>
+            <div class="col4">
+              <label>Expiry (MM/YY)</label>
+              <input class="input" id="exp" placeholder="MM/YY" required/>
+            </div>
+            <div class="col4">
+              <label>CVV</label>
+              <input class="input" id="cvv" inputmode="numeric" minlength="3" maxlength="4" required/>
+            </div>
+            <div class="col12">
+              <label>Address</label>
+              <input class="input" id="addr" required placeholder="Street, City, PIN"/>
+            </div>
+            <div class="col12" style="margin-top:6px">
+              <label><input type="checkbox" id="terms" required/> I agree to the terms & cancellation policy.</label>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" type="submit">Pay Now</button>
+            <button class="btn" type="button" onclick="history.back()" style="border:1px solid var(--glass-border)">Go Back</button>
+          </div>
+          <p id="formErr" class="muted" style="margin-top:8px;color:#b91c1c"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- Success Overlay -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="succTitle">
+    <div class="dialog">
+      <h2 id="succTitle">Payment Success ✅</h2>
+      <p class="success">Thanks for booking!!</p>
+      <p class="muted">Your e-itinerary has been generated.</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="location.href='index.html'">Back to Home</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('overlay').classList.remove('show')">Close</button>
+      </div>
+    </div>
+  </div>
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+    // THEME
+    const body = document.body;
+    const tBtn = document.getElementById('themeToggle');
+    const tIcon = document.getElementById('themeIcon');
+    const tText = document.getElementById('themeText');
+    const saved = localStorage.getItem('theme');
+    if(saved === 'dark'){ body.classList.add('dark'); tIcon.textContent='☀️'; tText.textContent='Light'; }
+    tBtn.addEventListener('click', ()=>{
+      body.classList.toggle('dark');
+      const dark = body.classList.contains('dark');
+      localStorage.setItem('theme', dark?'dark':'light');
+      tIcon.textContent = dark ? '☀️' : '🌙';
+      tText.textContent = dark ? 'Light' : 'Dark';
+    });
+
+    // Read params
+    const p = new URLSearchParams(location.search);
+    const tour = {
+      id: p.get('id') || 'custom',
+      title: p.get('title') || 'Custom Trip',
+      price: parseInt(p.get('price') || '0',10),
+      nights: parseInt(p.get('nights') || '0',10),
+      rating: p.get('rating') || '-'
+    };
+    // Fill summary
+    document.getElementById('tourTitle').textContent = tour.title;
+    document.getElementById('tourDuration').textContent = `${tour.nights}N / ${tour.nights+1}D`;
+    document.getElementById('tourRating').textContent = tour.rating;
+    document.getElementById('basePrice').textContent = tour.price.toLocaleString('en-IN');
+    let total = tour.price;
+    const totalEl = document.getElementById('total');
+    const promoInput = document.getElementById('promo');
+    const promoMsg = document.getElementById('promoMsg');
+    function updateTotal(){ totalEl.textContent = total.toLocaleString('en-IN'); }
+    updateTotal();
+
+    // Promo
+    document.getElementById('applyPromo').addEventListener('click', ()=>{
+      const code = promoInput.value.trim().toUpperCase();
+      if(code === 'TRAVEL10'){
+        total = Math.round(tour.price * 0.9);
+        promoMsg.textContent = 'Promo applied: 10% off.';
+      } else if(code){
+        total = tour.price;
+        promoMsg.textContent = 'Invalid code.';
+      } else {
+        promoMsg.textContent = 'Enter code TRAVEL10 for 10% off.';
+      }
+      updateTotal();
+    });
+
+    // Download itinerary (Blob)
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      const lines = [
+        'SkyTrip — Itinerary',
+        '===================',
+        `Tour: ${tour.title}`,
+        `Duration: ${tour.nights}N / ${tour.nights+1}D`,
+        `Rating: ${tour.rating} stars`,
+        `Total: ₹ ${total.toLocaleString('en-IN')}`,
+        '',
+        'Thank you for booking with SkyTrip!'
+      ].join('\n');
+      const blob = new Blob([lines], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${tour.title.replace(/\s+/g,'_')}_Itinerary.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 500);
+    });
+
+    // Payment validation
+    function validExp(mmYY){
+      const m = /^(\d{2})\/(\d{2})$/.exec(mmYY);
+      if(!m) return false;
+      let [_,mm,yy] = m; mm = +mm; yy = +yy;
+      if(mm<1 || mm>12) return false;
+      const year = 2000 + yy;
+      const expDate = new Date(year, mm); // first of next month
+      return expDate > new Date();
+    }
+    function maskCard(v){
+      return v.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19);
+    }
+    const cardEl = document.getElementById('card');
+    cardEl.addEventListener('input', e=>{ e.target.value = maskCard(e.target.value); });
+
+    document.getElementById('payForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const card = document.getElementById('card').value.replace(/\s/g,'');
+      const exp = document.getElementById('exp').value.trim();
+      const cvv = document.getElementById('cvv').value.trim();
+      const addr = document.getElementById('addr').value.trim();
+      const terms = document.getElementById('terms').checked;
+      const err = document.getElementById('formErr');
+
+      err.textContent = '';
+      if(!name || !email || !phone || !card || !exp || !cvv || !addr || !terms){
+        err.textContent = 'Please fill all fields and accept terms.';
+        return;
+      }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent='Invalid email.'; return; }
+      if(card.length<16){ err.textContent='Invalid card number.'; return; }
+      if(!validExp(exp)){ err.textContent='Invalid expiry date.'; return; }
+      if(cvv.length<3){ err.textContent='Invalid CVV.'; return; }
+
+      // Success overlay + confetti
+      showSuccess();
+    });
+
+    // Success overlay & confetti
+    const overlay = document.getElementById('overlay');
+    function showSuccess(){
+      overlay.classList.add('show');
+      makeConfetti(180);
+    }
+    function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+    function makeConfetti(count){
+      for(let i=0;i<count;i++){
+        const piece = document.createElement('div');
+        piece.className='piece';
+        piece.style.left = rand(0,100)+'vw';
+        piece.style.background = `hsl(${rand(0,360)}deg, 85%, ${rand(45,65)}%)`;
+        piece.style.transform = `translateY(-20px) rotate(${rand(0,360)}deg)`;
+        piece.style.animationDelay = (Math.random()*0.9)+'s';
+        piece.style.width = rand(8,12)+'px';
+        piece.style.height = rand(10,18)+'px';
+        document.body.appendChild(piece);
+        piece.addEventListener('animationend', ()=>piece.remove());
+      }
+    }
+  </script>
+</body>
+</html>

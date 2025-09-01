@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SkyTrip — Tours</title>
+  <style>
+    :root{
+      --bg: #f4fbff;
+      --card: rgba(255,255,255,0.65);
+      --text: #0e2336;
+      --muted:#46637a;
+      --brand1:#1ea7ff;
+      --brand2:#15d6c6;
+      --accent:#0ea5e9;
+      --glass-border: rgba(0,0,0,0.08);
+      --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      --ring: 0 0 0 3px rgba(14,165,233,0.35);
+      --chip:#e8f6ff;
+    }
+    body.dark{
+      --bg: #0b1220;
+      --card: rgba(17, 25, 40, 0.6);
+      --text: #e6f0ff;
+      --muted:#a3b3c7;
+      --brand1:#00b7ff;
+      --brand2:#33ffc9;
+      --accent:#22d3ee;
+      --glass-border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.55);
+      --ring: 0 0 0 3px rgba(34,211,238,0.35);
+      --chip:#142032;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    .container{width:min(1200px,92%);margin:auto}
+    header{
+      position:sticky;top:0;z-index:30; backdrop-filter: blur(14px);
+      background: linear-gradient( to right, rgba(255,255,255,.6), rgba(255,255,255,.25) );
+      border-bottom:1px solid var(--glass-border);
+    }
+    body.dark header{background: linear-gradient( to right, rgba(17,25,40,.65), rgba(17,25,40,.35) );}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:14px 0}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:900}
+    .badge{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#00212a}
+    .theme-toggle{
+      border:1px solid var(--glass-border);background:var(--card);padding:8px 12px;border-radius:12px;
+      display:flex;gap:8px;align-items:center;cursor:pointer;transition:.25s transform
+    }
+    .theme-toggle:hover{transform:translateY(-1px)}
+    main{padding:26px 0}
+    h1{font-size: clamp(26px, 4vw, 40px)}
+    .filters{
+      display:grid;gap:12px;grid-template-columns: repeat(12,1fr);
+      background:var(--card);border:1px solid var(--glass-border);border-radius:16px;padding:14px;box-shadow:var(--shadow)
+    }
+    .filters .field{grid-column: span 3;display:flex;flex-direction:column}
+    .filters .field.wide{grid-column: span 6}
+    .filters input, .filters select{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--glass-border);background:white;outline:none
+    }
+    body.dark .filters input, body.dark .filters select{background:rgba(0,0,0,.15);color:var(--text)}
+    .btn{padding:10px 14px;border:none;border-radius:12px;cursor:pointer;font-weight:800}
+    .btn-primary{background:linear-gradient(135deg,var(--brand1),var(--brand2)); color:#00212a}
+    .grid{display:grid;gap:16px;grid-template-columns: repeat(12,1fr); margin-top:18px}
+    .card{grid-column: span 4; background:var(--card); border:1px solid var(--glass-border); border-radius:18px; overflow:hidden; box-shadow:var(--shadow); transition:.25s transform}
+    @media (max-width:1024px){.card{grid-column: span 6} .filters .field{grid-column: span 6}}
+    @media (max-width:600px){.card{grid-column: span 12} .filters .field, .filters .field.wide{grid-column: span 12}}
+    .card img{height:180px;width:100%;object-fit:cover}
+    .card-body{padding:14px}
+    .meta{display:flex;gap:10px;flex-wrap:wrap}
+    .chip{background:var(--chip);padding:6px 10px;border-radius:999px;font-weight:700;font-size:.8rem}
+    .price{font-weight:900}
+    .rating{font-weight:700}
+    .sr{scroll-margin-top:80px}
+    .muted{color:var(--muted)}
+    .nores{padding:20px;text-align:center;border:1px dashed var(--glass-border);border-radius:12px;margin-top:14px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="brand">
+        <div class="badge">✈</div>
+        <a href="index.html" aria-label="Back to Home">SkyTrip</a>
+      </div>
+      <nav>
+        <a href="index.html" class="muted">Home</a>
+        <a href="#list" class="muted">All Tours</a>
+      </nav>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme"><span id="themeIcon">🌙</span><strong id="themeText" class="muted">Dark</strong></button>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Curated Tours</h1>
+    <p class="muted">Exactly 10 trips — use filters to find your perfect match. Book Now takes you to payment with details.</p>
+
+    <!-- FILTERS -->
+    <form class="filters" id="filters" aria-label="Tour Filters">
+      <div class="field wide">
+        <label for="q">Search (title/description)</label>
+        <input id="q" type="search" placeholder="Search tours… e.g., Goa, Ladakh" />
+      </div>
+      <div class="field">
+        <label for="priceRange">Max Price (₹)</label>
+        <input id="priceRange" type="number" min="0" step="500" placeholder="e.g., 20000"/>
+      </div>
+      <div class="field">
+        <label for="duration">Duration</label>
+        <select id="duration">
+          <option value="">Any</option>
+          <option value="3">Up to 3N</option>
+          <option value="5">Up to 5N</option>
+          <option value="7">Up to 7N</option>
+          <option value="8">8N+</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sort">Sort By</label>
+        <select id="sort">
+          <option value="">Recommended</option>
+          <option value="plh">Price: Low → High</option>
+          <option value="phl">Price: High → Low</option>
+          <option value="pop">Popularity</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" type="submit">Apply</button>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn" type="button" id="clearBtn" style="border:1px solid var(--glass-border)">Clear</button>
+      </div>
+    </form>
+
+    <!-- CARDS -->
+    <div id="list" class="grid sr"></div>
+    <div id="noResults" class="nores" style="display:none">No matching tours. Try clearing filters.</div>
+  </main>
+
+  <script>
+    // THEME (sync with index/payment)
+    const body = document.body;
+    const tBtn = document.getElementById('themeToggle');
+    const tIcon = document.getElementById('themeIcon');
+    const tText = document.getElementById('themeText');
+    const saved = localStorage.getItem('theme');
+    if(saved === 'dark'){ body.classList.add('dark'); tIcon.textContent='☀️'; tText.textContent='Light'; }
+    tBtn.addEventListener('click', ()=>{
+      body.classList.toggle('dark');
+      const dark = body.classList.contains('dark');
+      localStorage.setItem('theme', dark?'dark':'light');
+      tIcon.textContent = dark ? '☀️' : '🌙';
+      tText.textContent = dark ? 'Light' : 'Dark';
+    });
+
+    // Data — exactly 10 tours
+    const tours = [
+      {id:'goa', title:'Goa Sunshine Escape', desc:'Beach resort, North & South Goa sightseeing, nightlife.', nights:3, price:12999, rating:4.7, pop:95, img:'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1600&auto=format&fit=crop'},
+      {id:'manali', title:'Manali Himalayan Retreat', desc:'Solang Valley, cafés, snow-play & local markets.', nights:4, price:15499, rating:4.6, pop:90, img:'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=1600&auto=format&fit=crop'},
+      {id:'jaipur', title:'Jaipur Royal Heritage', desc:'Amber Fort, City Palace, pink city walk & food tour.', nights:2, price:9999, rating:4.5, pop:80, img:'https://images.unsplash.com/photo-1531379410502-63bfe8cdaf87?q=80&w=1600&auto=format&fit=crop'},
+      {id:'kerala', title:'Kerala Backwater Bliss', desc:'Alleppey houseboat, Munnar tea gardens & Ayurveda.', nights:3, price:14999, rating:4.7, pop:92, img:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop'},
+      {id:'ladakh', title:'Ladakh Road Adventure', desc:'Leh, Nubra, Pangong & high passes road-trip.', nights:6, price:28999, rating:4.8, pop:99, img:'https://images.unsplash.com/photo-1505764706515-aa95265c5abc?q=80&w=1600&auto=format&fit=crop'},
+      {id:'andaman', title:'Andaman Island Hopping', desc:'Havelock, Neil, scuba & pristine beaches.', nights:5, price:24499, rating:4.6, pop:85, img:'https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=1600&auto=format&fit=crop'},
+      {id:'rann', title:'Rann of Kutch Festival', desc:'White desert, folk shows & tent city.', nights:3, price:13999, rating:4.4, pop:75, img:'https://images.unsplash.com/photo-1544818459-3b1c9f2e6c58?q=80&w=1600&auto=format&fit=crop'},
+      {id:'kedarkantha', title:'Kedarkantha Trek', desc:'Guided winter trek with camping & gear.', nights:5, price:16999, rating:4.7, pop:70, img:'https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1600&auto=format&fit=crop'},
+      {id:'varanasi', title:'Varanasi Spiritual Sojourn', desc:'Ganga aarti, ghats & alley food trail.', nights:2, price:8999, rating:4.5, pop:78, img:'https://images.unsplash.com/photo-1548013147-5f3f4a5ed09e?q=80&w=1600&auto=format&fit=crop'},
+      {id:'sikkim', title:'Sikkim Bliss', desc:'Gangtok & Pelling, lakes & monasteries.', nights:5, price:21999, rating:4.6, pop:83, img:'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1600&auto=format&fit=crop'}
+    ];
+
+    // Fill grid
+    const list = document.getElementById('list');
+    function render(items){
+      list.innerHTML = items.map(t => `
+        <article id="${t.id}" class="card">
+          <img src="${t.img}" alt="${t.title}" />
+          <div class="card-body">
+            <h3>${t.title}</h3>
+            <p class="muted">${t.desc}</p>
+            <div class="meta">
+              <span class="chip">${t.nights}N / ${t.nights+1}D</span>
+              <span class="chip rating">★ ${t.rating}</span>
+            </div>
+            <p class="price" style="margin:8px 0">₹ ${t.price.toLocaleString('en-IN')}</p>
+            <button class="btn btn-primary" aria-label="Book ${t.title}" onclick='book(${JSON.stringify(t)})'>Book Now</button>
+          </div>
+        </article>
+      `).join('');
+      document.getElementById('noResults').style.display = items.length? 'none' : 'block';
+    }
+    render(tours);
+
+    // Filters
+    const f = {
+      q: document.getElementById('q'),
+      price: document.getElementById('priceRange'),
+      duration: document.getElementById('duration'),
+      sort: document.getElementById('sort')
+    };
+    function applyFilters(e){
+      if(e) e.preventDefault();
+      let out = [...tours];
+      const qv = f.q.value.trim().toLowerCase();
+      if(qv){
+        out = out.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(qv));
+      }
+      const p = parseInt(f.price.value,10);
+      if(!isNaN(p) && p>0){
+        out = out.filter(t => t.price <= p);
+      }
+      const d = f.duration.value;
+      if(d){
+        const dn = parseInt(d,10);
+        if(dn===3) out = out.filter(t => t.nights <= 3);
+        else if(dn===5) out = out.filter(t => t.nights <= 5);
+        else if(dn===7) out = out.filter(t => t.nights <= 7);
+        else out = out.filter(t => t.nights >= 8);
+      }
+      const s = f.sort.value;
+      if(s==='plh') out.sort((a,b)=>a.price-b.price);
+      else if(s==='phl') out.sort((a,b)=>b.price-a.price);
+      else if(s==='pop') out.sort((a,b)=>b.pop-a.pop);
+      render(out);
+    }
+    document.getElementById('filters').addEventListener('submit', applyFilters);
+    document.getElementById('clearBtn').addEventListener('click', ()=>{
+      f.q.value=''; f.price.value=''; f.duration.value=''; f.sort.value='';
+      render(tours);
+    });
+
+    // Deep-link from home
+    const params = new URLSearchParams(location.search);
+    const anchor = location.hash.replace('#','');
+    if(params.size){ // maybe show toast or pre-filter based on from/to if needed
+      // (for demo, we simply prefill the search with destination city if provided)
+      const to = params.get('to');
+      if(to){ f.q.value = to; applyFilters(); }
+    }
+    if(anchor){
+      setTimeout(()=>{
+        const el = document.getElementById(anchor);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 300);
+    }
+
+    // Book Now → payment with query params
+    function book(t){
+      const q = new URLSearchParams({
+        id: t.id,
+        title: t.title,
+        price: t.price,
+        nights: t.nights,
+        rating: t.rating
+      }).toString();
+      location.href = `payment.html?${q}`;
+    }
+    window.book = book; // expose for inline onclick
+  </script>
+</body>
+</html>
